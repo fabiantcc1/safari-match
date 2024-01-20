@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class Piece : MonoBehaviour
 {
@@ -29,5 +30,21 @@ public class Piece : MonoBehaviour
         x = _x;
         y = _y;
         board = _board;
+    }
+
+    public void Move(int desX, int desY)
+    {
+        transform.DOMove(new Vector3(desX, desY, -5f), 0.25f)
+            .SetEase(Ease.InOutCubic)
+            .onComplete = () => {
+                x = desX;
+                y = desY;
+            };
+    }
+
+    [ContextMenu("Test Move")]
+    public void MoveTest()
+    {
+        Move(0, 0);
     }
 }
