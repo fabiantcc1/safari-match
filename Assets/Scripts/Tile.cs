@@ -14,4 +14,20 @@ public class Tile : MonoBehaviour
         y = _y;
         board = _board;
     }
+
+
+    public void OnMouseDown()
+    {
+        board.TileDown(this);
+    }
+
+    public void OnMouseEnter()
+    {
+        board.TileOver(this);
+    }
+
+    public void OnMouseUp()
+    {
+        board.TileUp(this);
+    }
 }
