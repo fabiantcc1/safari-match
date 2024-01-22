@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Board : MonoBehaviour
@@ -118,5 +119,67 @@ public class Board : MonoBehaviour
         }
 
         return false;
+    }
+
+    public List<Piece> GetMatchByDirection(int xpos, int ypos, Vector2 direction, int minPieces = 3)
+    {
+        List<Piece> matches = new List<Piece>();
+        Piece startPiece = Pieces[xpos, ypos];
+        matches.Add(startPiece);
+
+        int nextX;
+        int nextY;
+        int maxVal = width > height ? width : height;
+
+        for (int i = 1; i < maxVal; i++)
+        {
+            nextX = xpos + ((int)direction.x * i);
+            nextY = ypos + ((int)direction.y * i);
+
+            if (nextX >= 0 && nextX < width && nextY >= 0 && nextY < height)
+            {
+                var nextPiece = Pieces[nextX, nextY];
+                if (nextPiece != null && nextPiece.pieceType == startPiece.pieceType)
+                {
+                    matches.Add(nextPiece);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        if (matches.Count >= minPieces)
+        {
+            return matches;
+        }
+
+        return null;
+    }
+
+    public List<Piece> GetMatchByPiece(int xpos, int ypos, int minPieces = 3)
+    {
+        var upMatch = GetMatchByDirection(xpos, ypos, Vector2.up, 2) ?? new List<Piece>();
+        var downMatch = GetMatchByDirection(xpos, ypos, Vector2.down, 2) ?? new List<Piece>();
+        var leftMatch = GetMatchByDirection(xpos, ypos, Vector2.left, 2) ?? new List<Piece>();
+        var rightMatch = GetMatchByDirection(xpos, ypos, Vector2.right, 2) ?? new List<Piece>();
+
+        var verticalMatches = upMatch.Union(downMatch).ToList();
+        var horizontalMatches = leftMatch.Union(rightMatch).ToList();
+
+        var foundMatches = new List<Piece>();
+
+        if (verticalMatches.Count >= minPieces)
+        {
+            foundMatches = foundMatches.Union(verticalMatches).ToList();
+        }
+
+        if (horizontalMatches.Count >= minPieces)
+        {
+            foundMatches = foundMatches.Union(horizontalMatches).ToList();
+        }
+
+        return foundMatches;
     }
 }
