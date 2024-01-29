@@ -135,26 +135,23 @@ public class Board : MonoBehaviour
 
         yield return new WaitForSeconds(0.6f);
 
-        bool foundMach = false;
         var startMatches = GetMatchByPiece(startTile.x, startTile.y, 3);
         var endMatches = GetMatchByPiece(endTile.x, endTile.y, 3);
 
-        startMatches.ForEach (piece => {
-            foundMach = true;
-            ClearPieceAt(piece.x, piece.y);
-        });
+        var allMatches = startMatches.Union(endMatches).ToList();
 
-        endMatches.ForEach(piece => {
-            foundMach = true;
-            ClearPieceAt(piece.x, piece.y);
-        });
+        
 
-        if (!foundMach)
+        if (allMatches.Count == 0)
         {
             startPiece.Move(startTile.x, startTile.y);
             endPiece.Move(endTile.x, endTile.y);
             Pieces[startTile.x, startTile.y] = startPiece;
             Pieces[endTile.x, endTile.y] = endPiece;
+        }
+        else
+        {
+            ClearPieces(allMatches);
         }
 
         startTile = null;
@@ -162,6 +159,62 @@ public class Board : MonoBehaviour
         swappingPieces = false;
 
         yield return null;
+    }
+
+    private void ClearPieces(List<Piece> piecesToClear)
+    {
+        piecesToClear.ForEach(piece => {
+            ClearPieceAt(piece.x, piece.y);
+        });
+
+        List<int> columns = GetColumns(piecesToClear);
+        List<Piece> collapsedPieces = CollapaseColumns(columns, 0.3f);
+    }
+
+    private List<Piece> CollapaseColumns(List<int> columns, float timeToCollapse)
+    {
+        List<Piece> movingPieces = new List<Piece>();
+
+        for (int x = 0; x < columns.Count; x++)
+        {
+            var column = columns[x];
+
+            for (int y = 0; y < height; y++)
+            {
+                if (Pieces[column, y] == null)
+                {
+                    for (int yplus = y + 1; yplus < height; yplus++)
+                    {
+                        if (Pieces[column, yplus] != null)
+                        {
+                            Pieces[column, yplus].Move(column, y);
+                            Pieces[column, y] = Pieces[column, yplus];
+
+                            if (!movingPieces.Contains(Pieces[column, y])) movingPieces.Add(Pieces[column, y]);
+
+                            Pieces[column, yplus] = null;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return movingPieces;
+    }
+
+    private List<int> GetColumns(List<Piece> piecesToClear)
+    {
+        var result = new List<int>();
+
+        piecesToClear.ForEach(piece => {
+            if (!result.Contains(piece.x))
+            {
+                result.Add(piece.x);
+            }
+        });
+
+        return result;
     }
 
     public bool IsCloseTo(Tile start, Tile end)
