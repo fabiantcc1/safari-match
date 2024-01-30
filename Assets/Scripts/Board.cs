@@ -35,7 +35,7 @@ public class Board : MonoBehaviour
 
     private void SetupPieces()
     {
-        int maxInteration = 10;
+        int maxInteration = 50;
         int currentIteration;
 
         for (int x = 0; x < width; x++)
@@ -61,9 +61,8 @@ public class Board : MonoBehaviour
 
     private void ClearPieceAt(int x, int y)
     {
-        var pieceToClear = Pieces[x, y];
-        Destroy(pieceToClear.gameObject);
-        pieceToClear = null;
+        Destroy(Pieces[x, y].gameObject);
+        Pieces[x, y] = null;
     }
 
     private Piece CreatePieceAt(int x, int y)
@@ -169,6 +168,38 @@ public class Board : MonoBehaviour
 
         List<int> columns = GetColumns(piecesToClear);
         List<Piece> collapsedPieces = CollapaseColumns(columns, 0.3f);
+
+        FindMatchesRecursively(collapsedPieces);
+    }
+
+    private void FindMatchesRecursively(List<Piece> collapsedPieces)
+    {
+        StartCoroutine(FindMatchesRecursivelyCoroutine(collapsedPieces));
+    }
+
+    private IEnumerator FindMatchesRecursivelyCoroutine(List<Piece> collapsedPieces)
+    {
+        yield return new WaitForSeconds(1f);
+
+        List<Piece> newMatches = new List<Piece>();
+
+        collapsedPieces.ForEach(piece => {
+            var matches = GetMatchByPiece(piece.x, piece.y, 3);
+
+            if (matches != null)
+            {
+                newMatches = newMatches.Union(matches).ToList();
+                ClearPieces(matches);
+            }
+        });
+
+        if (newMatches.Count > 0)
+        {
+            var newCollapsedPieces = CollapaseColumns(GetColumns(newMatches), 0.3f);
+            FindMatchesRecursively(newCollapsedPieces);
+        }
+
+        yield return null;
     }
 
     private List<Piece> CollapaseColumns(List<int> columns, float timeToCollapse)
