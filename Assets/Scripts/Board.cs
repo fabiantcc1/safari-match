@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class Board : MonoBehaviour
 {
+    public float timeBetweenPieces = 0.05f;
+
     public int width;
     public int height;
     public GameObject titleObject;
@@ -30,10 +32,15 @@ public class Board : MonoBehaviour
 
         SetupBoard();
         PositionCamera();
-        SetupPieces();
+        StartCoroutine(SetupPieces());
     }
 
-    private void SetupPieces()
+    private void Update()
+    {
+        Debug.Log(swappingPieces);
+    }
+
+    private IEnumerator SetupPieces()
     {
         int maxInteration = 50;
         int currentIteration;
@@ -42,21 +49,28 @@ public class Board : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                currentIteration = 0;
-                CreatePieceAt(x, y);
-                while (HasPreviousMatches(x, y))
-                {
-                    ClearPieceAt(x, y);
-                    CreatePieceAt(x, y);
-                    currentIteration++;
+                yield return new WaitForSeconds(timeBetweenPieces);
 
-                    if (currentIteration > maxInteration)
+                if (Pieces[x, y] == null)
+                {
+                    currentIteration = 0;
+                    CreatePieceAt(x, y);
+                    while (HasPreviousMatches(x, y))
                     {
-                        break;
+                        ClearPieceAt(x, y);
+                        CreatePieceAt(x, y);
+                        currentIteration++;
+
+                        if (currentIteration > maxInteration)
+                        {
+                            break;
+                        }
                     }
                 }
             }
         }
+
+        yield return null;
     }
 
     private void ClearPieceAt(int x, int y)
@@ -105,16 +119,20 @@ public class Board : MonoBehaviour
 
     public void TileDown(Tile _tile)
     {
+        if (swappingPieces) return;
         startTile = _tile;
     }
 
     public void TileOver(Tile _tile)
     {
+        if (swappingPieces) return;
         endTile = _tile;
     }
 
     public void TileUp(Tile _tile)
     {
+        if (swappingPieces) return;
+
         if (startTile != null && endTile != null && IsCloseTo(startTile, endTile))
         {
             StartCoroutine(SwapTile());
@@ -123,6 +141,8 @@ public class Board : MonoBehaviour
 
     private IEnumerator SwapTile()
     {
+        swappingPieces = true;
+
         var startPiece = Pieces[startTile.x, startTile.y];
         var endPiece = Pieces[endTile.x, endTile.y];
 
@@ -147,6 +167,8 @@ public class Board : MonoBehaviour
             endPiece.Move(endTile.x, endTile.y);
             Pieces[startTile.x, startTile.y] = startPiece;
             Pieces[endTile.x, endTile.y] = endPiece;
+
+            swappingPieces = false;
         }
         else
         {
@@ -155,7 +177,6 @@ public class Board : MonoBehaviour
 
         startTile = null;
         endTile = null;
-        swappingPieces = false;
 
         yield return null;
     }
@@ -197,6 +218,13 @@ public class Board : MonoBehaviour
         {
             var newCollapsedPieces = CollapaseColumns(GetColumns(newMatches), 0.3f);
             FindMatchesRecursively(newCollapsedPieces);
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.1f);
+
+            yield return StartCoroutine(SetupPieces());
+            swappingPieces = false;
         }
 
         yield return null;

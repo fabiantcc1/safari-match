@@ -152,6 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7ce26915205a7f41aed47fcdaa5d454, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  timeBetweenPieces: 0.01
   width: 6
   height: 10
   titleObject: {fileID: 4413267112780261351, guid: 196a2822adbb6464db4684a7440e5aa4, type: 3}
